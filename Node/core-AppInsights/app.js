@@ -8,7 +8,7 @@ var telemetryModule = require('./telemetry-module.js');
 
 var appInsights = require('applicationinsights');
 appInsights.setup(process.env.APPINSIGHTS_INSTRUMENTATION_KEY).start();
-var appInsightsClient = appInsights.getClient();
+var appInsightsClient = new appInsights.TelemetryClient();
 
 // Setup Restify Server
 var server = restify.createServer();
@@ -29,6 +29,12 @@ var UserNameKey = 'UserName';
 var UserWelcomedKey = 'UserWelcomed';
 var CityKey = 'City';
 
+// Bot Storage: Here we register the state storage for your bot. 
+// Default store: volatile in-memory store - Only for prototyping!
+// We provide adapters for Azure Table, CosmosDb, SQL Azure, or you can implement your own!
+// For samples and documentation, see: https://github.com/Microsoft/BotBuilder-Azure
+var inMemoryStorage = new builder.MemoryBotStorage();
+
 // Setup bot with default dialog
 var bot = new builder.UniversalBot(connector, function (session) {
 
@@ -40,9 +46,9 @@ var bot = new builder.UniversalBot(connector, function (session) {
         session.send('Welcome to the Search City bot. I\'m currently configured to search for things in %s', session.conversationData[CityKey]);
     }
 
-    appInsightsClient.trackTrace('start', telemetry);
+    appInsightsClient.trackTrace({ message: 'start', properties: telemetry });
 
-    // is user's name set? 
+    // is user's name set?
     var userName = session.userData[UserNameKey];
     if (!userName) {
         return session.beginDialog('greet');
@@ -56,15 +62,14 @@ var bot = new builder.UniversalBot(connector, function (session) {
         }
     } catch (error) {
         var exceptionTelemetry = telemetryModule.createTelemetry(session);
-        exceptionTelemetry.exception = error.toString();
-        appInsightsClient.trackException(exceptionTelemetry);
+        appInsightsClient.trackException({ exception: error, properties: exceptionTelemetry });
     } finally {
         var resumeAfterPromptTelemetry = telemetryModule.createTelemetry(session);
-        appInsightsClient.trackTrace('resumeAfterPrompt', resumeAfterPromptTelemetry);
+        appInsightsClient.trackTrace({ message: 'resumeAfterPrompt', properties: resumeAfterPromptTelemetry });
     }
 
     session.beginDialog('search');
-});
+}).set('storage', inMemoryStorage); // Register in memory storage
 
 // Enable Conversation Data persistence
 bot.set('persistConversationData', true);
@@ -82,14 +87,13 @@ bot.dialog('search', function (session, args, next) {
         session.send('%s, wait a few seconds. Searching for \'%s\' in \'%s\'...', userName, messageText, city);
         session.send('https://www.bing.com/search?q=%s', encodeURIComponent(messageText + ' in ' + city));
     } catch (error) {
-        measuredEventTelemetry.exception = error.toString();
-        appInsightsClient.trackException('search', t);
+        appInsightsClient.trackException({ exception: error, properties: measuredEventTelemetry });
     } finally {
         var timerEnd = process.hrtime(timerStart);
         measuredEventTelemetry.metrics = (timerEnd[0], timerEnd[1] / 1000000);
-        appInsightsClient.trackEvent('timeTaken', measuredEventTelemetry);
+        appInsightsClient.trackEvent({ name: 'timeTaken', properties: measuredEventTelemetry });
     }
-    
+
     session.endDialog();
 });
 
@@ -102,7 +106,7 @@ bot.dialog('reset', function (session) {
     delete session.privateConversationData[UserWelcomedKey];
 
     var telemetry = telemetryModule.createTelemetry(session);
-    appInsightsClient.trackEvent('reset', telemetry);
+    appInsightsClient.trackEvent({ name: 'reset', properties: telemetry });
 
     session.endDialog('Ups... I\'m suffering from a memory loss...');
 }).triggerAction({ matches: /^reset/i });
@@ -122,7 +126,7 @@ bot.dialog('printCurrentCity', function (session) {
     }
 
     var telemetry = telemetryModule.createTelemetry(session);
-    appInsightsClient.trackEvent('current city', telemetry);
+    appInsightsClient.trackEvent({ name: 'current city', properties: telemetry });
 
     session.endDialog();
 }).triggerAction({ matches: /^current city/i });
@@ -135,7 +139,7 @@ bot.dialog('changeCurrentCity', function (session, args) {
     var userName = session.userData[UserNameKey];
 
     var telemetry = telemetryModule.createTelemetry(session);
-    appInsightsClient.trackEvent('change city to', telemetry);
+    appInsightsClient.trackEvent({ name: 'change city to', properties: telemetry });
 
     session.endDialog('All set %s. From now on, all my searches will be for things in %s.', userName, newCity);
 }).triggerAction({ matches: /^change city to (.*)/i });
@@ -148,7 +152,7 @@ bot.dialog('changeMyCurrentCity', function (session, args) {
     var userName = session.userData[UserNameKey];
 
     var telemetry = telemetryModule.createTelemetry(session);
-    appInsightsClient.trackEvent('change my city to', telemetry);
+    appInsightsClient.trackEvent({ name: 'change my city to', properties: telemetry });
 
     session.endDialog('All set %s. I have overridden the city to %s just for you', userName, newCity);
 }).triggerAction({ matches: /^change my city to (.*)/i });
@@ -161,7 +165,7 @@ bot.dialog('greet', new builder.SimpleDialog(function (session, results) {
 
         var telemetry = telemetryModule.createTelemetry(session);
         telemetry.userName = results.response; // You can add properties after-the-fact as well
-        appInsightsClient.trackEvent('new user', telemetry);
+        appInsightsClient.trackEvent({ name: 'new user', properties: telemetry });
 
         return session.endDialog('Welcome %s! %s', results.response, HelpMessage);
     }

@@ -1,6 +1,5 @@
 ﻿namespace ChannelDataBot
 {
-    using System;
     using System.Net;
     using System.Net.Http;
     using System.Threading.Tasks;
@@ -50,7 +49,7 @@
             }
             else if (message.Type == ActivityTypes.Typing)
             {
-                // Handle knowing tha the user is typing
+                // Handle knowing that the user is typing
             }
             else if (message.Type == ActivityTypes.Ping)
             {

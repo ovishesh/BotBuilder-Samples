@@ -15,13 +15,14 @@ The minimum prerequisites to run this sample are:
 
 
 #### LUIS Application
-If you want to test this sample, you have to import the pre-build [LuisBot.json](LuisBot.json) file to your LUIS account.
 
 The first step to using LUIS is to create or import an application. Go to the home page, www.luis.ai, and log in. After creating your LUIS account you'll be able to Import an Existing Application where can you can select a local copy of the LuisBot.json file an import it.
 
 ![Import an Existing Application](images/prereqs-import.png)
 
-Once you imported the application you'll need to "train" the model ([Training](https://www.microsoft.com/cognitive-services/en-us/LUIS-api/documentation/Train-Test)) before you can "Publish" the model in an HTTP endpoint. For more information, take a look at [Publishing a Model](https://www.microsoft.com/cognitive-services/en-us/LUIS-api/documentation/PublishApp).
+If you want to test this sample, you have to import the pre-build [LuisBot.json](LuisBot.json) file to your LUIS account.
+
+Once you imported the application you'll need to "train" the model ([Training](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/train-test)) before you can "Publish" the model in an HTTP endpoint. For more information, take a look at [Publishing a Model](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/publishapp).
 
 Finally, edit the [RootLuisDialog.cs](Dialogs/RootLuisDialog.cs#L14) file and update the LuisModel attribute placeholders with the values corresponding to your Subscription and Application.
 
@@ -49,14 +50,14 @@ You'll need these two values to configure the LuisDialog through the LuisModel a
     
 2. Subscription Key
 
-    In the [My keys page](https://www.luis.ai/home/keys), copy the Programmatic API Key.
+    Click on the Publish App link from the LUIS application dashboard.  Once your app is published, copy the subscription key from the app endpoint url on the Publish App page.
     
     ![Programmatic API Key](images/prereqs-apikey.png)
     
 
 ### Code Highlights
 
-One of the key problems in human-computer interactions is the ability of the computer to understand what a person wants, and to find the pieces of information that are relevant to their intent. In the LUIS application, you will bundle together the intents and entities that are important to your task. Read more about [Planning an Application](https://www.microsoft.com/cognitive-services/en-us/LUIS-api/documentation/Plan-your-app) in the LUIS Help Docs.
+One of the key problems in human-computer interactions is the ability of the computer to understand what a person wants, and to find the pieces of information that are relevant to their intent. In the LUIS application, you will bundle together the intents and entities that are important to your task. Read more about [Planning an Application](https://docs.microsoft.com/en-us/azure/cognitive-services/LUIS/plan-your-app) in the LUIS Help Docs.
 Check out the use of LuisIntent attributes decorating [RootLuisDialog](Dialogs/RootLuisDialog.cs#L36) methods to handle LUIS Intents, for instance `[LuisIntent("SearchHotels")]`.
 
 ````C#
@@ -95,9 +96,17 @@ Another LUIS Model Feature used is Phrase List Features, for instance, the model
 
 ### Spelling Correction
 
-If you want to enable spelling correction, set the `IsSpellCorrectionEnabled` key to `true` in the [Web.config](Web.config) file.
+To enable spelling correction, subscribe to Cognitive Services Bing Spell Check API from [here](https://www.microsoft.com/cognitive-services/en-us/subscriptions) to obtain a Trial API Key and update the `BingSpellCheckApiEndpoint` endpoint and `BingSpellCheckApiKey` key, and set the `IsSpellCorrectionEnabled` key to `true` in [Web.config](Web.config) file.
 
-Bing Spell Check API provides a module that allows you to to correct the spelling of the text. Check out the [reference](https://dev.cognitive.microsoft.com/docs/services/56e73033cf5ff80c2008c679/operations/56e73036cf5ff81048ee6727) to know more about the modules available. 
+````XML
+  <appSettings>
+    <add key="BingSpellCheckApiEndpoint" value="PUT-API-ENDPOINT-HERE" />
+    <add key="BingSpellCheckApiKey" value="PUT-YOUR-OWN-API-KEY-HERE" />
+    <add key="IsSpellCorrectionEnabled" value="true" />
+  </appSettings>
+````
+
+Bing Spell Check API provides a module that allows you to to correct the spelling of the text. Check out the [reference](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-spell-check-api-v7-reference7) to know more about the modules available. 
 
 [BingSpellCheckService.cs](Services/BingSpellCheckService.cs) is the core component illustrating how to call the Bing Spell Check RESTful API.
 
@@ -129,9 +138,9 @@ You will see the following in the Bot Framework Emulator when opening and runnin
 
 To get more information about how to get started in Bot Builder for .NET and Conversations please review the following resources:
 * [Bot Builder for .NET](https://docs.microsoft.com/en-us/bot-framework/dotnet/)
-* [Add language understanding to a bot](https://docs.microsoft.com/en-us/bot-framework/cognitive-services-add-bot-language)
-* [LUIS Help Docs](https://www.luis.ai/home/help)
-* [Cognitive Services Documentation](https://www.microsoft.com/cognitive-services/en-us/luis-api/documentation/home)
+* [Add language understanding to a bot](https://docs.botframework.com/en-us/node/builder/guides/understanding-natural-language/)
+* [LUIS Help Docs](https://docs.microsoft.com/en-us/azure/cognitive-services/LUIS/Home)
+* [Cognitive Services Documentation](https://docs.microsoft.com/en-us/azure/#pivot=products&panel=cognitive)
 * [Specify initial form state and entities](https://docs.microsoft.com/en-us/bot-framework/dotnet/bot-builder-dotnet-formflow-advanced#specify-initial-form-state-and-entities)
 * Other examples using LUIS
     * [Alarm Bot](https://docs.microsoft.com/en-us/bot-framework/dotnet/bot-builder-dotnet-luis-dialogs#alarm-bot-implementation)
